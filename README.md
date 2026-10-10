@@ -6,13 +6,24 @@ All payments are simulated. No real money is charged and no card details are col
 
 ## Current Delivery
 
-This repository currently contains the application foundation and Docker environment,
-based on the official Laravel React Starter Kit. Business pages, authentication flows,
-and booking/payment functionality will be delivered in subsequent steps.
-Frontend page implementation requires an approved prototype.
+Step 1.1 adds member registration, session login, and logout to the application
+foundation. Registration requires a name, unique email address, password, and
+password confirmation. Passwords use Laravel's secure hashing. Authentication
+uses Fortify, same-site sessions, CSRF protection, and submission rate limits.
 
-The local entry point is http://localhost:8080. At this stage it returns application
-initialization metadata as JSON; it is not the public studio website.
+Passwords require at least eight characters and must fit within bcrypt's
+72-byte limit; null characters are rejected. Multibyte characters may occupy
+more than one byte. Email addresses are normalized to lowercase consistently.
+
+The local entry point is http://localhost:8080. Registration and login normally
+return to a minimal home page showing the member's name and logout action;
+an intercepted login returns to the intended protected page. The approved
+authentication design uses English text, light backgrounds, a deep-green accent,
+shadcn/ui controls, and a responsive full-width header and footer.
+
+The full studio website, member dashboard, administrator role isolation, profile
+settings, and password recovery follow their documented implementation stages.
+Future public navigation labels are not active links yet.
 
 ## Stack
 
@@ -114,13 +125,32 @@ at commit `81cfb35e9a5bc4640556639a00459944120a261b` (Laravel 13, React 19,
 Inertia 2, Vite 8, ESLint, and Prettier). Dependency resolutions are recorded in
 `composer.lock` and `package-lock.json`. Page templates and features outside
 StudioFlow's requirements are not imported. shadcn/ui aliases are initialized;
-UI primitives and pages will be added with the approved frontend prototype.
+The approved authentication pages compose shadcn/ui primitives.
+
+The authentication prototype uses a studio photograph from
+[Unsplash](https://images.unsplash.com/photo-1534438327276-14e5300c3a48), stored
+locally in `public/assets/studio.jpg`. Barlow Semi Condensed and DM Sans are
+loaded through Google Fonts, with a system sans-serif fallback.
 
 ## Delivery Boundary
 
-Only framework tables and migrations are initialized in this step. Membership,
+Only framework tables and migrations are initialized at this stage. Membership,
 class, booking, and payment tables and sample data follow their implementation stages.
 There are no demo login accounts yet.
+
+## Verify Registration and Login
+
+Visit `/register` and create a member with a unique email and matching passwords
+of at least eight characters. Confirm that the home page shows the member's
+name. Log out, then try registering the same email again; the email field must
+show an error. Try logging in with an incorrect password, then the correct
+password. Confirm that logout returns to an empty login form and that the home
+page no longer shows the member's name. Check the login and registration pages
+at desktop and mobile widths. Submitting a form disables repeat submission.
+
+Authentication checks can create local accounts. Use dedicated verification
+addresses rather than real personal data. No default administrator account or
+administrator access is delivered in step 1.1.
 
 The first version is single-studio and single-currency, with no real transactions,
 automatic renewals, refunds, Redis, queue workers, or persistent Node.js service.

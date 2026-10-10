@@ -1,5 +1,66 @@
-@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import 'tailwindcss' source(none);
 @import 'tw-animate-css';
 
 @source '../views';
 @source '../js';
+
+@theme inline {
+    --color-background: #ffffff;
+    --color-foreground: #202824;
+    --color-primary: #185d46;
+    --color-primary-foreground: #ffffff;
+    --color-muted-foreground: #616963;
+    --color-input: #ccd4cf;
+    --color-ring: #185d46;
+    --color-accent: #edf3ef;
+    --color-accent-foreground: #202824;
+    --color-secondary: #edf3ef;
+    --color-secondary-foreground: #202824;
+    --color-destructive: #b42318;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #dce2de;
+}
+
+* {
+    letter-spacing: 0;
+}
+body {
+    margin: 0;
+    color: #202824;
+    background: #f6f8f7;
+    font-family: 'DM Sans', sans-serif;
+}
+.display {
+    font-family: 'Barlow Semi Condensed', sans-serif;
+}
+button,
+a,
+input {
+    -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled),
+a {
+    cursor: pointer;
+}
+a:focus-visible {
+    outline: 2px solid #185d46;
+    outline-offset: 4px;
+}
+.auth-input {
+    height: 46px;
+    background: white;
+    box-shadow: none;
+    font-size: 16px;
+}
+.auth-input[aria-invalid='true'] {
+    border-color: #b42318;
+}
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
