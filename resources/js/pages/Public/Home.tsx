@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StudioLayout from '@/layouts/StudioLayout';
 import type { SharedData } from '@/types/auth';
@@ -26,9 +26,19 @@ export default function Home() {
                     </p>
                 )}
                 {auth.user ? (
-                    <p className="mt-2 text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
-                        Welcome, {auth.user.name}.
-                    </p>
+                    <>
+                        <p className="mt-2 text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
+                            Welcome, {auth.user.name}.
+                        </p>
+                        {auth.user.role === 'admin' && (
+                            <Button asChild className="mt-7">
+                                <Link href="/admin">
+                                    <ShieldCheck /> Open administration{' '}
+                                    <ArrowRight />
+                                </Link>
+                            </Button>
+                        )}
+                    </>
                 ) : (
                     <>
                         <p className="mt-3 text-sm leading-6 text-muted-foreground">

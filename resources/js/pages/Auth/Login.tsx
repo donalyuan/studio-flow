@@ -27,7 +27,7 @@ export default function Login() {
                 Welcome back
             </h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Log in to your member account.
+                Log in to your StudioFlow account.
             </p>
             <AuthStatus />
             <SubmissionError message={submissionError} />

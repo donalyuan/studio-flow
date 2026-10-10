@@ -106,6 +106,7 @@ export default [
     },
     {
         ignores: [
+            '.local/**',
             'vendor',
             'node_modules',
             'public',

@@ -6,8 +6,11 @@ All payments are simulated. No real money is charged and no card details are col
 
 ## Current Delivery
 
-Step 1.1 adds member registration, session login, and logout to the application
-foundation. Registration requires a name, unique email address, password, and
+Steps 1.1–1.2 add member registration, session login, logout, and administrator
+role isolation. Each account has one role: `member` or `admin`. The shared
+`/login` page checks the role stored on the authenticated account; it has no
+identity selector. Ordinary registration always creates a member account and
+ignores submitted roles. Registration requires a name, unique email address, password, and
 password confirmation. Passwords use Laravel's secure hashing. Authentication
 uses Fortify, same-site sessions, CSRF protection, and submission rate limits.
 
@@ -21,7 +24,16 @@ an intercepted login returns to the intended protected page. The approved
 authentication design uses English text, light backgrounds, a deep-green accent,
 shadcn/ui controls, and a responsive full-width header and footer.
 
-The full studio website, member dashboard, administrator role isolation, profile
+Administrators see an `Open administration` action on home and can enter `/admin`.
+All routes in `routes/web-admin.php` use authentication and administrator
+middleware. Guests are redirected to login; signed-in members receive HTTP 403
+with an access-restricted page. A login intercepted by `/admin` returns there
+and still checks the account's role. Direct login continues to return home.
+The approved step 1.2 design adds a minimal responsive administration shell and
+403 page, using the same shadcn/ui controls and visual language. It contains no
+business statistics or management tools yet.
+
+The full studio website, member dashboard, profile
 settings, and password recovery follow their documented implementation stages.
 Future public navigation labels are not active links yet.
 
@@ -61,6 +73,20 @@ The application reads the mounted `.env` file directly. `key:generate` persists
 the application key in that local file. Generate the key once during initial
 setup; replacing an existing key invalidates encrypted data and sessions.
 The current seeder intentionally creates no business data or login accounts.
+
+After migrations, create a separate administrator through the interactive
+initialization command:
+
+```bash
+docker compose exec app php artisan studioflow:create-admin
+```
+
+Enter a name, an unused email address, and a password with confirmation. Password
+entry is hidden and uses the same limits as registration. The command rejects
+existing emails, so it cannot promote or overwrite a member account. Register a
+different email at `/register` to exercise the member role. Both accounts log in
+at `/login`. Administrator creation is a local initialization command, not a web
+action; no default password or automatic administrator registration is provided.
 
 On Linux, restrict the local file to its owner and the PHP-FPM group:
 
@@ -134,9 +160,10 @@ loaded through Google Fonts, with a system sans-serif fallback.
 
 ## Delivery Boundary
 
-Only framework tables and migrations are initialized at this stage. Membership,
-class, booking, and payment tables and sample data follow their implementation stages.
-There are no demo login accounts yet.
+Only framework tables plus the user role migration are initialized at this stage.
+Membership, class, booking, and payment tables and sample data follow their
+implementation stages. A new environment has no demo login accounts until an
+administrator is created with `studioflow:create-admin` and a member registers.
 
 ## Verify Registration and Login
 
@@ -149,8 +176,23 @@ page no longer shows the member's name. Check the login and registration pages
 at desktop and mobile widths. Submitting a form disables repeat submission.
 
 Authentication checks can create local accounts. Use dedicated verification
-addresses rather than real personal data. No default administrator account or
-administrator access is delivered in step 1.1.
+addresses rather than real personal data. No default administrator credentials
+are provided.
+
+## Verify Role Isolation
+
+Create an administrator with `studioflow:create-admin` and a separate member
+through `/register`. Log in as the administrator and confirm that home offers
+`Open administration`, `/admin` loads, the mobile menu works, and logout returns
+to login. Log in as the member and confirm that home has no administration
+action; directly visiting `/admin` must return HTTP 403 with `Return home`.
+
+Log out, then visit `/admin`. Confirm the redirect to `/login`. Administrator
+login must return to `/admin`; member login must return to `/admin` with HTTP 403.
+Ordinary direct login must still return home. Submitting `role=admin` to member
+registration must not create an administrator. All future administrator pages
+and operations must remain inside the same authenticated administrator route
+group. Member-only workflows are added with their respective business stages.
 
 The first version is single-studio and single-currency, with no real transactions,
 automatic renewals, refunds, Redis, queue workers, or persistent Node.js service.

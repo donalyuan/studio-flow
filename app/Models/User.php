@@ -16,6 +16,10 @@ class User extends Authenticatable
         'password',
     ];
 
+    protected $attributes = [
+        'role' => 'member',
+    ];
+
     protected $hidden = [
         'password',
         'remember_token',
