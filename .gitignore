@@ -1,0 +1,42 @@
+# Local AI instructions, skills, configuration, and working artifacts.
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+CLAUDE.local.md
+GEMINI.md
+SKILL.md
+.agents/
+.codex/
+.claude/
+.cursor/
+.cursorrules
+.cursorignore
+.windsurf/
+.windsurfrules
+.aider*
+.mcp.json
+.github/copilot-instructions.md
+.github/instructions/
+.github/prompts/
+.github/agents/
+.local/ai/
+
+# Local requirements documents remain authoritative but are not committed.
+requirement_document.md
+.local/requirements/
+
+# Application dependencies, local configuration, and generated assets.
+/vendor/
+/node_modules/
+/.env
+/.env.*
+!/.env.example
+/public/build/
+/public/hot
+/bootstrap/cache/*.php
+/storage/*.key
+/storage/logs/*
+!/storage/logs/.gitignore
+/.idea/
+/npm-debug.log*
+/composer.phar
