@@ -46,20 +46,30 @@ export default function Login() {
                         form.setData('email', event.target.value)
                     }
                 />
-                <AuthField
-                    id="password"
-                    name="password"
-                    label="Password"
-                    type="password"
-                    autoComplete="current-password"
-                    maxLength={255}
-                    value={form.data.password}
-                    error={form.errors.password}
-                    disabled={form.processing}
-                    onChange={(event) =>
-                        form.setData('password', event.target.value)
-                    }
-                />
+                <div>
+                    <div className="mb-2 flex justify-end text-sm font-medium text-primary">
+                        <Link
+                            href="/forgot-password"
+                            className="underline-offset-4 hover:underline"
+                        >
+                            Forgot password?
+                        </Link>
+                    </div>
+                    <AuthField
+                        id="password"
+                        name="password"
+                        label="Password"
+                        type="password"
+                        autoComplete="current-password"
+                        maxLength={255}
+                        value={form.data.password}
+                        error={form.errors.password}
+                        disabled={form.processing}
+                        onChange={(event) =>
+                            form.setData('password', event.target.value)
+                        }
+                    />
+                </div>
                 <Button
                     type="submit"
                     disabled={form.processing}

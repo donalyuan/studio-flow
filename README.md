@@ -6,7 +6,8 @@ All payments are simulated. No real money is charged and no card details are col
 
 ## Current Delivery
 
-Steps 1.1–1.2 add member registration, session login, logout, and administrator
+Steps 1.1–1.3 add member registration, session login, logout, account settings,
+password recovery, and administrator
 role isolation. Each account has one role: `member` or `admin`. The shared
 `/login` page checks the role stored on the authenticated account; it has no
 identity selector. Ordinary registration always creates a member account and
@@ -33,8 +34,27 @@ The approved step 1.2 design adds a minimal responsive administration shell and
 403 page, using the same shadcn/ui controls and visual language. It contains no
 business statistics or management tools yet.
 
-The full studio website, member dashboard, profile
-settings, and password recovery follow their documented implementation stages.
+Account settings at `/settings/profile` and `/settings/password` let members and
+administrators update their own name, email, and password. Email addresses stay
+unique and normalized to lowercase. Password updates verify the current password
+and use the same limits as registration. The account remains signed in after an
+update; account role cannot be changed. Changing an email or password invalidates
+previous password reset links for that account.
+
+`Forgot password?` on login opens `/forgot-password`. Laravel's password broker
+sends a reset link, valid for 60 minutes. The same email must wait at least 60
+seconds before another link is sent. Recovery and reset submissions each have a
+separate five-per-minute limit by IP; profile and password updates each allow five
+submissions per minute per account and IP. Unknown email, validation, throttling,
+invalid links, and request failures show actionable errors. A successful reset
+returns to login; the user signs in with the new password. No reset URL is shown
+on the website.
+
+The approved step 1.3 design keeps the existing full-width header/footer, fonts,
+and deep-green accent. Account settings uses Profile/Password navigation with
+side-by-side desktop layout and stacked mobile forms; recovery uses the existing
+authentication layout. All standard controls use shadcn/ui. The full studio
+website and member dashboard follow their documented implementation stages.
 Future public navigation labels are not active links yet.
 
 ## Stack
@@ -193,6 +213,54 @@ Ordinary direct login must still return home. Submitting `role=admin` to member
 registration must not create an administrator. All future administrator pages
 and operations must remain inside the same authenticated administrator route
 group. Member-only workflows are added with their respective business stages.
+
+## Verify Account Settings and Password Recovery
+
+Log in with a dedicated test member. Open `Account settings` from home or the
+header (the mobile menu provides the same entry). Save a new name and an unused
+email address; confirm the saved values after reloading and the updated name in
+the header. Attempt to use another account's email and confirm a field error.
+Submitting an account id or role must not update anyone else or change the role.
+An administrator uses the same settings pages and can return to administration.
+Guests visiting either settings page must log in and then return to that page.
+
+Open Password. Try a wrong current password, a short password, and mismatched
+confirmation; each must fail without changing the password. Update it with the
+correct current password and matching valid new values. Confirm success, cleared
+password fields, and an active session. Log out: the old password must fail and
+the new one must log in. Check the eight-character minimum and 72-byte maximum
+with multibyte text if demonstrating password boundaries.
+
+For the local demonstration, keep `MAIL_MAILER=log` in `.env`. Log out, open
+`Forgot password?`, and submit the test account's current email. The success
+message means a notification was written to the local application log; this
+transport does not deliver to a real inbox. Read it privately:
+
+```bash
+docker compose exec app tail -n 100 storage/logs/mail-preview.log
+```
+
+Open only your own test account's reset URL from that log. Confirm the email is
+prefilled and the password fields are blank. Set and confirm a valid new
+password; confirm the redirect to login, success feedback, old-password rejection,
+and new-password login. Opening the used link again must show an invalid-link
+message with `Request a new reset link`. A link older than 60 minutes must behave
+the same way. Invalid email, an unknown email, and another link request within
+60 seconds must show errors; they must not report a successful send. Requests
+that fail to send mail must preserve the error and allow a retry.
+
+Password reset logs contain private links. Do not publish them, expose a log
+viewer, or use other people's accounts during a demonstration. Public demos use
+dedicated preset accounts; SMTP delivery can be configured separately when needed.
+No payment provider, queue worker, or external mail account is required locally.
+The log mail transport uses a separate `mail-preview` channel so application log
+filtering does not discard the reset notification.
+
+Check these pages at desktop and mobile sizes. While submitting, fields and the
+action button must be disabled. A failed request must show a retry message;
+profile and recovery email inputs remain available for retry, while password
+inputs are cleared after a completed attempt. A session-expired response prompts
+a refresh. The website contains no prototype review controls.
 
 The first version is single-studio and single-currency, with no real transactions,
 automatic renewals, refunds, Redis, queue workers, or persistent Node.js service.

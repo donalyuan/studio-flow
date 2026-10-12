@@ -54,5 +54,19 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('registration', fn (Request $request) => Limit::perMinute(5)
             ->by($request->ip())
             ->response($rateLimitResponse));
+
+        RateLimiter::for('password-recovery', fn (Request $request) => Limit::perMinute(5)
+            ->by('password-recovery|'.$request->ip())
+            ->response($rateLimitResponse));
+
+        RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(5)
+            ->by('password-reset|'.$request->ip())
+            ->response($rateLimitResponse));
+
+        RateLimiter::for('profile-update', fn (Request $request) => Limit::perMinute(5)
+            ->by('profile-update|'.$request->user()->getAuthIdentifier().'|'.$request->ip()));
+
+        RateLimiter::for('password-update', fn (Request $request) => Limit::perMinute(5)
+            ->by('password-update|'.$request->user()->getAuthIdentifier().'|'.$request->ip()));
     }
 }

@@ -30,14 +30,21 @@ export default function Home() {
                         <p className="mt-2 text-sm leading-6 [overflow-wrap:anywhere] text-muted-foreground">
                             Welcome, {auth.user.name}.
                         </p>
-                        {auth.user.role === 'admin' && (
-                            <Button asChild className="mt-7">
-                                <Link href="/admin">
-                                    <ShieldCheck /> Open administration{' '}
-                                    <ArrowRight />
+                        <div className="mt-7 flex flex-wrap gap-3">
+                            <Button asChild>
+                                <Link href="/settings/profile">
+                                    Account settings
                                 </Link>
                             </Button>
-                        )}
+                            {auth.user.role === 'admin' && (
+                                <Button asChild variant="outline">
+                                    <Link href="/admin">
+                                        <ShieldCheck /> Open administration{' '}
+                                        <ArrowRight />
+                                    </Link>
+                                </Button>
+                            )}
+                        </div>
                     </>
                 ) : (
                     <>

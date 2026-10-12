@@ -10,9 +10,11 @@ import type { SharedData } from '@/types/auth';
 export default function StudioLayout({
     children,
     register = false,
+    accountSettings = false,
 }: {
     children: ReactNode;
     register?: boolean;
+    accountSettings?: boolean;
 }) {
     const { auth } = usePage<SharedData>().props;
     const [menu, setMenu] = useState(false);
@@ -36,7 +38,7 @@ export default function StudioLayout({
                     </Link>
                     <nav
                         aria-label="Main navigation"
-                        className="hidden items-center gap-8 md:flex"
+                        className="hidden items-center gap-8 lg:flex"
                     >
                         {labels.map((label) =>
                             label === 'Home' ? (
@@ -57,21 +59,30 @@ export default function StudioLayout({
                             ),
                         )}
                     </nav>
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                         {auth.user ? (
                             <>
                                 <span
-                                    className="max-w-16 truncate text-sm sm:max-w-48"
+                                    className="hidden max-w-36 truncate text-sm md:inline"
                                     title={auth.user.name}
                                 >
                                     {auth.user.name}
                                 </span>
                                 <Button
+                                    asChild
+                                    variant="ghost"
+                                    className="hidden h-11 sm:inline-flex"
+                                >
+                                    <Link href="/settings/profile">
+                                        Account settings
+                                    </Link>
+                                </Button>
+                                <Button
                                     variant="outline"
                                     disabled={logout.processing}
                                     aria-label="Log out"
                                     title="Log out"
-                                    className="h-11 w-11 shrink-0 px-0 sm:w-auto sm:px-4"
+                                    className="hidden h-11 w-11 shrink-0 px-0 sm:inline-flex sm:w-auto sm:px-4"
                                     onClick={() => {
                                         clearSubmissionError();
                                         logout.post('/logout', {
@@ -84,7 +95,7 @@ export default function StudioLayout({
                                     ) : (
                                         <LogOut />
                                     )}
-                                    <span className="hidden sm:inline">
+                                    <span className="hidden md:inline">
                                         Log out
                                     </span>
                                 </Button>
@@ -112,7 +123,7 @@ export default function StudioLayout({
                             }
                             aria-expanded={menu}
                             aria-controls="mobile-navigation"
-                            className="h-11 w-11 md:hidden"
+                            className="h-11 w-11 shrink-0 lg:hidden"
                             onClick={() => setMenu((value) => !value)}
                         >
                             {menu ? <X /> : <Menu />}
@@ -123,7 +134,7 @@ export default function StudioLayout({
                     <nav
                         id="mobile-navigation"
                         aria-label="Mobile navigation"
-                        className="grid gap-4 border-t border-border px-5 py-5 md:hidden"
+                        className="grid gap-4 border-t border-border px-5 py-5 lg:hidden"
                     >
                         {labels.map((label) =>
                             label === 'Home' ? (
@@ -144,7 +155,40 @@ export default function StudioLayout({
                                 </span>
                             ),
                         )}
-                        {!auth.user && (
+                        {auth.user ? (
+                            <>
+                                <span className="truncate text-sm text-muted-foreground">
+                                    {auth.user.name}
+                                </span>
+                                <Link
+                                    href="/settings/profile"
+                                    className="text-sm font-medium text-primary"
+                                    onClick={() => setMenu(false)}
+                                >
+                                    Account settings
+                                </Link>
+                                <Button
+                                    variant="outline"
+                                    className="h-11 justify-start"
+                                    disabled={logout.processing}
+                                    onClick={() => {
+                                        clearSubmissionError();
+                                        logout.post('/logout', {
+                                            onSuccess: () => setMenu(false),
+                                        });
+                                    }}
+                                >
+                                    {logout.processing ? (
+                                        <LoaderCircle className="animate-spin" />
+                                    ) : (
+                                        <LogOut />
+                                    )}
+                                    {logout.processing
+                                        ? 'Logging out...'
+                                        : 'Log out'}
+                                </Button>
+                            </>
+                        ) : (
                             <Link
                                 href={register ? '/login' : '/register'}
                                 className="text-sm font-medium text-primary"
@@ -156,15 +200,23 @@ export default function StudioLayout({
                     </nav>
                 )}
             </header>
-            <main className="mx-auto w-full max-w-[560px] flex-1 px-5 pt-8 pb-12 sm:pt-12">
+            <main
+                className={
+                    accountSettings
+                        ? 'mx-auto w-full max-w-[960px] flex-1 px-5 pt-9 pb-14 sm:px-8 sm:pt-12'
+                        : 'mx-auto w-full max-w-[560px] flex-1 px-5 pt-8 pb-12 sm:pt-12'
+                }
+            >
                 <SubmissionError message={submissionError} />
-                <img
-                    src="/assets/studio.jpg"
-                    alt="Fitness studio with strength training equipment"
-                    width="1000"
-                    height="246"
-                    className="mb-7 h-28 w-full object-cover object-center sm:h-32"
-                />
+                {!accountSettings && (
+                    <img
+                        src="/assets/studio.jpg"
+                        alt="Fitness studio with strength training equipment"
+                        width="1000"
+                        height="246"
+                        className="mb-7 h-28 w-full object-cover object-center sm:h-32"
+                    />
+                )}
                 {children}
             </main>
             <footer className="flex w-full flex-wrap justify-between gap-2 border-t border-border px-5 py-5 text-xs text-muted-foreground sm:px-8 lg:px-12">

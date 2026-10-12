@@ -65,6 +65,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'mail-preview' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/mail-preview.log'),
+            'level' => 'debug',
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

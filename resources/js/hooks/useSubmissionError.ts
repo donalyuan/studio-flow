@@ -10,14 +10,20 @@ export function useSubmissionError(processing: boolean) {
         }
 
         const removeInvalid = router.on('invalid', (event) => {
-            if (event.detail.response.status >= 500) {
+            const status = event.detail.response.status;
+
+            if (status >= 500 || status === 419 || status === 429) {
                 console.error(
                     'Authentication request failed with HTTP status',
-                    event.detail.response.status,
+                    status,
                 );
                 event.preventDefault();
                 setSubmissionError(
-                    "We couldn't complete your request. Please try again.",
+                    status === 419
+                        ? 'Your session has expired. Refresh the page and try again.'
+                        : status === 429
+                          ? 'Too many attempts. Please wait before trying again.'
+                          : "We couldn't complete your request. Please try again.",
                 );
             }
         });
