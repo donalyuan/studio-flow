@@ -8,6 +8,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Demo records are added alongside the corresponding business migrations.
+        $this->call(MembershipPlanSeeder::class);
     }
 }

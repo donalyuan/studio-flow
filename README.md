@@ -55,7 +55,17 @@ and deep-green accent. Account settings uses Profile/Password navigation with
 side-by-side desktop layout and stacked mobile forms; recovery uses the existing
 authentication layout. All standard controls use shadcn/ui. The full studio
 website and member dashboard follow their documented implementation stages.
-Future public navigation labels are not active links yet.
+Future public navigation labels are not active links yet. Step 2.1 now adds administrator membership plan management; the detailed scope and verification checklist are below.
+
+## Step 2.1 Membership Plan Management
+
+Administrators manage membership plans at `/admin/membership-plans` after signing in. The page supports creating and editing monthly plans and class packs, explicitly choosing availability, enabling or disabling an existing record, and deleting a plan that has never been purchased. Deletion requires confirmation and sets `deleted_at`; the record remains in the database but is hidden from the default catalog. There is no restore action. A successfully paid order prevents deletion, including direct requests to the backend; pending, cancelled and expired orders do not. Prices are stored as exact USD decimal amounts. Monthly plans show unlimited classes and persist `total_classes` as `NULL`; class packs require a positive total class count. Plan names, descriptions, prices, validity days, class counts, and enabled state are validated by the backend, including the `DECIMAL(10,2)` and unsigned-integer limits.
+
+The approved prototype is recorded locally in `.local/ai/step-2.1-prototype/DESIGN.md`; production implementation uses the same responsive administration shell, desktop table/detail layout, mobile cards, and empty, validation, success, submitting, request-failure and deletion-confirmation states. Standard controls use shadcn/ui primitives and the `frontend-design` process. The order table and model provide the paid-order relationship for deletion checks and retain historical plan references and snapshots. Purchase eligibility, checkout, payment, card issuance and public membership browsing remain deferred to their documented stages. Future payment success and plan deletion must use the same plan row lock; historical pending orders keep their snapshot even if the plan is soft deleted.
+
+To verify this step, sign in as an administrator, open `Membership plans`, create one monthly plan and one class pack, edit a class pack to monthly and confirm the allowance becomes unlimited, toggle availability twice, and confirm the success messages and disabled-plan catalog row. Cancel a deletion confirmation and verify that the plan remains; then delete an unpurchased plan and verify that it disappears while its database record has `deleted_at` set. A plan with a paid-order fixture must show the deletion restriction and reject a direct DELETE request. Pending, cancelled and expired order fixtures must retain their snapshot and plan reference after soft deletion. Submit empty or malformed values to check field errors and retained input. Repeat at 390px and 320px widths; the mobile layout uses cards and a collapsed administration navigation. A member or guest must receive the existing access restriction or login redirect for all five plan routes.
+
+The seeder is idempotent for a catalog containing any record, including soft-deleted records, so rerunning it does not recreate deleted demo plans. Existing local verification rows are data, not application fixtures; do not reset the database with `migrate:fresh` on a shared local volume.
 
 ## Stack
 
@@ -92,7 +102,7 @@ curl -fsS http://localhost:8080/up
 The application reads the mounted `.env` file directly. `key:generate` persists
 the application key in that local file. Generate the key once during initial
 setup; replacing an existing key invalidates encrypted data and sessions.
-The current seeder intentionally creates no business data or login accounts.
+The membership plan seeder creates the two approved USD demo plans only when the membership table has no records, including soft-deleted records; it never overwrites edited plans or recreates deleted ones. It does not create login accounts or orders.
 
 After migrations, create a separate administrator through the interactive
 initialization command:
@@ -180,9 +190,10 @@ loaded through Google Fonts, with a system sans-serif fallback.
 
 ## Delivery Boundary
 
-Only framework tables plus the user role migration are initialized at this stage.
-Membership, class, booking, and payment tables and sample data follow their
-implementation stages. A new environment has no demo login accounts until an
+Framework tables, user roles, membership plans with soft deletion, and the order
+data foundation are initialized at this stage. Class, booking, payment-attempt
+and membership-card tables follow their implementation stages. Order creation
+and payment flows are not implemented yet. A new environment has no demo login accounts until an
 administrator is created with `studioflow:create-admin` and a member registers.
 
 ## Verify Registration and Login

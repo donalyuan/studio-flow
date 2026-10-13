@@ -5,6 +5,8 @@ use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,5 +21,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo('/');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request): Response {
+            // Exceptions bypass Inertia middleware's redirect normalization.
+            if ($request->header('X-Inertia') &&
+                $response->getStatusCode() === 302 &&
+                in_array($request->method(), ['PUT', 'PATCH', 'DELETE'], true)) {
+                $response->setStatusCode(303);
+            }
+
+            return $response;
+        });
     })->create();
