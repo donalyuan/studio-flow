@@ -18,9 +18,11 @@ import type { SharedData } from '@/types/auth';
 export default function AdminLayout({
     children,
     title = 'Administration',
+    className = '',
 }: {
     children: ReactNode;
     title?: string;
+    className?: string;
 }) {
     const { auth } = usePage<SharedData>().props;
     const [menu, setMenu] = useState(false);
@@ -77,9 +79,14 @@ export default function AdminLayout({
     );
 
     return (
-        <div className="flex min-h-screen flex-col text-foreground md:flex-row">
-            <aside className="hidden w-60 shrink-0 border-r border-border bg-white p-5 md:block">
-                <Link href="/" className="display ml-2 text-3xl font-bold">
+        <div
+            className={`studio-admin flex min-h-screen flex-col text-foreground md:flex-row ${className}`}
+        >
+            <aside className="admin-sidebar hidden w-60 shrink-0 border-r border-border bg-white p-5 md:block">
+                <Link
+                    href="/"
+                    className="admin-brand display ml-2 text-3xl font-bold"
+                >
                     Studio<span className="text-primary">Flow</span>
                     <span className="ml-1 inline-block h-2 w-2 bg-primary" />
                 </Link>
@@ -94,7 +101,7 @@ export default function AdminLayout({
                         <div className="flex w-full items-center justify-between gap-3 md:hidden">
                             <Link
                                 href="/"
-                                className="display text-2xl font-bold"
+                                className="admin-brand display text-2xl font-bold"
                             >
                                 Studio<span className="text-primary">Flow</span>
                                 <span className="ml-1 inline-block h-2 w-2 bg-primary" />

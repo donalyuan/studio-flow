@@ -17,54 +17,60 @@ export default function AccountSettingsLayout({
 
     return (
         <StudioLayout accountSettings>
-            <Link
-                href={admin ? '/admin' : '/'}
-                className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary"
-            >
-                <ArrowLeft size={16} />
-                {admin ? 'Return to administration' : 'Return home'}
-            </Link>
-            <h1 className="display mt-6 text-4xl font-semibold sm:text-5xl">
-                Account settings
-            </h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Manage your personal details and password.
-            </p>
-            <div className="mt-9 grid gap-7 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-12">
-                <nav
-                    aria-label="Account settings navigation"
-                    className="flex gap-2 border-b border-border pb-3 sm:flex-col sm:border-0 sm:p-0"
+            <div className="settings-workspace">
+                <Link
+                    href={admin ? '/admin' : '/'}
+                    className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary"
                 >
-                    <Button
-                        asChild
-                        variant={active === 'profile' ? 'secondary' : 'ghost'}
-                        className="h-11 flex-1 justify-center sm:flex-none sm:justify-start"
+                    <ArrowLeft size={16} />
+                    {admin ? 'Return to administration' : 'Return home'}
+                </Link>
+                <div className="settings-heading">
+                    <h1 className="display">Account settings</h1>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        Manage your personal details and password.
+                    </p>
+                </div>
+                <div className="settings-columns">
+                    <nav
+                        aria-label="Account settings navigation"
+                        className="flex gap-2 md:flex-col"
                     >
-                        <Link
-                            href="/settings/profile"
-                            aria-current={
-                                active === 'profile' ? 'page' : undefined
+                        <Button
+                            asChild
+                            variant={
+                                active === 'profile' ? 'secondary' : 'ghost'
                             }
+                            className="h-11 flex-1 justify-center md:flex-none md:justify-start"
                         >
-                            Profile
-                        </Link>
-                    </Button>
-                    <Button
-                        asChild
-                        variant={active === 'password' ? 'secondary' : 'ghost'}
-                        className="h-11 flex-1 justify-center sm:flex-none sm:justify-start"
-                    >
-                        <Link
-                            href="/settings/password"
-                            aria-current={
-                                active === 'password' ? 'page' : undefined
+                            <Link
+                                href="/settings/profile"
+                                aria-current={
+                                    active === 'profile' ? 'page' : undefined
+                                }
+                            >
+                                Profile
+                            </Link>
+                        </Button>
+                        <Button
+                            asChild
+                            variant={
+                                active === 'password' ? 'secondary' : 'ghost'
                             }
+                            className="h-11 flex-1 justify-center md:flex-none md:justify-start"
                         >
-                            Password
-                        </Link>
-                    </Button>
-                </nav>
-                <section className="max-w-[560px] min-w-0">{children}</section>
+                            <Link
+                                href="/settings/password"
+                                aria-current={
+                                    active === 'password' ? 'page' : undefined
+                                }
+                            >
+                                Password
+                            </Link>
+                        </Button>
+                    </nav>
+                    <section className="settings-form">{children}</section>
+                </div>
             </div>
         </StudioLayout>
     );

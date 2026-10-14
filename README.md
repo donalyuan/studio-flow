@@ -19,10 +19,18 @@ Passwords require at least eight characters and must fit within bcrypt's
 72-byte limit; null characters are rejected. Multibyte characters may occupy
 more than one byte. Email addresses are normalized to lowercase consistently.
 
-The local entry point is http://localhost:8080. Registration and login normally
+The local entry point is http://localhost:8080. The approved theme applies to all
+currently implemented pages: home, authentication, account settings, administration,
+membership management, and access restrictions. Authentication uses a studio
+photograph beside an open form on desktop and a short photo band on mobile;
+home uses a photograph/content split. Account settings uses an open workspace,
+and administration uses a dark navigation rail with a light content area. The
+shared palette uses white, aluminum gray, dark ink, and a restrained blue accent,
+with small control corners and visible keyboard focus. Standard controls remain
+shadcn/ui components. Registration and login normally
 return to a minimal home page showing the member's name and logout action;
 an intercepted login returns to the intended protected page. The approved
-authentication design uses English text, light backgrounds, a deep-green accent,
+authentication design uses English text, light backgrounds, a blue accent,
 shadcn/ui controls, and a responsive full-width header and footer.
 
 Administrators see an `Open administration` action on home and can enter `/admin`.
@@ -50,8 +58,8 @@ invalid links, and request failures show actionable errors. A successful reset
 returns to login; the user signs in with the new password. No reset URL is shown
 on the website.
 
-The approved step 1.3 design keeps the existing full-width header/footer, fonts,
-and deep-green accent. Account settings uses Profile/Password navigation with
+The approved step 1.3 flows retain the full-width header/footer and use the shared
+studio theme. Account settings uses Profile/Password navigation with
 side-by-side desktop layout and stacked mobile forms; recovery uses the existing
 authentication layout. All standard controls use shadcn/ui. The full studio
 website and member dashboard follow their documented implementation stages.
@@ -61,9 +69,9 @@ Future public navigation labels are not active links yet. Step 2.1 now adds admi
 
 Administrators manage membership plans at `/admin/membership-plans` after signing in. The page supports creating and editing monthly plans and class packs, explicitly choosing availability, enabling or disabling an existing record, and deleting a plan that has never been purchased. Deletion requires confirmation and sets `deleted_at`; the record remains in the database but is hidden from the default catalog. There is no restore action. A successfully paid order prevents deletion, including direct requests to the backend; pending, cancelled and expired orders do not. Prices are stored as exact USD decimal amounts. Monthly plans show unlimited classes and persist `total_classes` as `NULL`; class packs require a positive total class count. Plan names, descriptions, prices, validity days, class counts, and enabled state are validated by the backend, including the `DECIMAL(10,2)` and unsigned-integer limits.
 
-The approved prototype is recorded locally in `.local/ai/step-2.1-prototype/DESIGN.md`; production implementation uses the same responsive administration shell, desktop table/detail layout, mobile cards, and empty, validation, success, submitting, request-failure and deletion-confirmation states. Standard controls use shadcn/ui primitives and the `frontend-design` process. The order table and model provide the paid-order relationship for deletion checks and retain historical plan references and snapshots. Purchase eligibility, checkout, payment, card issuance and public membership browsing remain deferred to their documented stages. Future payment success and plan deletion must use the same plan row lock; historical pending orders keep their snapshot even if the plan is soft deleted.
+The approved layout is a full-width desktop table with View, availability and delete actions on each row. View opens plan details in a shadcn/ui dialog; create and edit use the same dialog, while mobile uses plan cards with vertically stacked actions. Deletion confirmation, validation, success, submitting and request-failure states remain available. The reviewed prototype is recorded locally in `.local/ai/theme-prototype/DESIGN.md`; standard controls use shadcn/ui primitives and the `frontend-design` process. The order table and model provide the paid-order relationship for deletion checks and retain historical plan references and snapshots. Purchase eligibility, checkout, payment, card issuance and public membership browsing remain deferred to their documented stages. Future payment success and plan deletion must use the same plan row lock; historical pending orders keep their snapshot even if the plan is soft deleted.
 
-To verify this step, sign in as an administrator, open `Membership plans`, create one monthly plan and one class pack, edit a class pack to monthly and confirm the allowance becomes unlimited, toggle availability twice, and confirm the success messages and disabled-plan catalog row. Cancel a deletion confirmation and verify that the plan remains; then delete an unpurchased plan and verify that it disappears while its database record has `deleted_at` set. A plan with a paid-order fixture must show the deletion restriction and reject a direct DELETE request. Pending, cancelled and expired order fixtures must retain their snapshot and plan reference after soft deletion. Submit empty or malformed values to check field errors and retained input. Repeat at 390px and 320px widths; the mobile layout uses cards and a collapsed administration navigation. A member or guest must receive the existing access restriction or login redirect for all five plan routes.
+To verify this step, sign in as an administrator, open `Membership plans`, create one monthly plan and one class pack, edit a class pack to monthly and confirm the allowance becomes unlimited, toggle availability from its row twice, and confirm the status and success feedback update. Open and close details and edit dialogs, checking focus returns to the originating row action. Cancel a row deletion confirmation and verify that the plan remains; then delete an unpurchased plan and verify that it disappears while its database record has `deleted_at` set. A plan with a paid-order fixture must show the deletion restriction and reject a direct DELETE request. Pending, cancelled and expired order fixtures must retain their snapshot and plan reference after soft deletion. Submit empty or malformed values to check field errors and retained input. Repeat at 390px and 320px widths; the mobile layout uses cards with vertically stacked row actions and a collapsed administration navigation. A member or guest must receive the existing access restriction or login redirect for all five plan routes.
 
 The seeder is idempotent for a catalog containing any record, including soft-deleted records, so rerunning it does not recreate deleted demo plans. Existing local verification rows are data, not application fixtures; do not reset the database with `migrate:fresh` on a shared local volume.
 

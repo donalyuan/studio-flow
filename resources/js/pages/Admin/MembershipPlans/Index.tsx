@@ -8,7 +8,7 @@ import {
     Power,
     Trash2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import SubmissionError from '@/components/auth/SubmissionError';
 import { Badge } from '@/components/ui/badge';
@@ -72,22 +72,17 @@ const toForm = (plan: MembershipPlan): PlanForm => ({
 });
 
 export default function MembershipPlansIndex() {
-    const { plans, selectedPlanId, flash } = usePage<Props>().props;
-    const initial = useMemo(
-        () =>
-            plans.find((plan) => plan.id === selectedPlanId) ??
-            plans[0] ??
-            null,
-        [plans, selectedPlanId],
-    );
-    const [selectedId, setSelectedId] = useState<number | null>(
-        initial?.id ?? null,
-    );
+    const { plans, flash } = usePage<Props>().props;
+    const [selectedId, setSelectedId] = useState<number | null>(null);
     const [mode, setMode] = useState<'detail' | 'new' | 'edit'>('detail');
+    const [detailOpen, setDetailOpen] = useState(false);
     const [confirmDelete, setConfirmDelete] = useState(false);
-    const form = useForm<PlanForm>(initial ? toForm(initial) : emptyForm);
+    const detailTrigger = useRef<HTMLElement | null>(null);
+    const deleteTrigger = useRef<HTMLElement | null>(null);
+    const [dialogMessage, setDialogMessage] = useState('');
+    const form = useForm<PlanForm>({ ...emptyForm });
     const statusForm = useForm<{ enabled: boolean }>({
-        enabled: initial?.enabled ?? false,
+        enabled: false,
     });
     const selected = plans.find((plan) => plan.id === selectedId) ?? null;
     const deleteForm = useForm<{ plan?: string }>({});
@@ -97,16 +92,23 @@ export default function MembershipPlansIndex() {
     const busy =
         form.processing || statusForm.processing || deleteForm.processing;
 
-    function selectPlan(plan: MembershipPlan) {
+    function selectPlan(plan: MembershipPlan, trigger: HTMLElement) {
+        detailTrigger.current = trigger;
         setSelectedId(plan.id);
         setMode('detail');
+        setDetailOpen(true);
+        setDialogMessage('');
         clearSubmissionError();
         form.clearErrors();
         form.setDefaults(toForm(plan));
         form.setData(toForm(plan));
     }
     function createPlan() {
+        detailTrigger.current = document.activeElement as HTMLElement;
+        setSelectedId(null);
         setMode('new');
+        setDialogMessage('');
+        setDetailOpen(true);
         clearSubmissionError();
         form.clearErrors();
         form.setDefaults(emptyForm);
@@ -115,14 +117,23 @@ export default function MembershipPlansIndex() {
     function editPlan() {
         if (selected) {
             setMode('edit');
+            setDialogMessage('');
             clearSubmissionError();
             form.clearErrors();
             form.setData(toForm(selected));
         }
     }
     function onSuccess(page: { props: Record<string, unknown> }) {
-        setSelectedId((page.props as Partial<Props>).selectedPlanId ?? null);
+        const props = page.props as Partial<Props> & {
+            flash?: { status?: string };
+        };
+        setSelectedId(props.selectedPlanId ?? null);
         setMode('detail');
+        setDialogMessage(props.flash?.status ?? '');
+        setDetailOpen(true);
+        window.requestAnimationFrame(() =>
+            document.getElementById('edit-plan-action')?.focus(),
+        );
     }
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -146,16 +157,27 @@ export default function MembershipPlansIndex() {
             });
         }
     }
-    function toggleStatus() {
-        if (!selected) {
-            return;
-        }
-
+    function toggleStatus(plan: MembershipPlan) {
         clearSubmissionError();
         statusForm.clearErrors();
-        statusForm.transform(() => ({ enabled: !selected.enabled }));
-        statusForm.patch(`/admin/membership-plans/${selected.id}/status`, {
+        statusForm.transform(() => ({ enabled: !plan.enabled }));
+        statusForm.patch(`/admin/membership-plans/${plan.id}/status`, {
             preserveScroll: true,
+            onSuccess: () => {
+                setDialogMessage(
+                    plan.enabled ? 'Plan disabled.' : 'Plan enabled.',
+                );
+                window.requestAnimationFrame(() => {
+                    const actions = [
+                        `toggle-plan-${plan.id}`,
+                        `toggle-plan-mobile-${plan.id}`,
+                    ];
+                    const target = actions
+                        .map((id) => document.getElementById(id))
+                        .find((element) => element?.getClientRects().length);
+                    target?.focus();
+                });
+            },
         });
     }
     function deletePlan() {
@@ -171,6 +193,8 @@ export default function MembershipPlansIndex() {
                 setConfirmDelete(false);
                 setSelectedId(null);
                 setMode('detail');
+                setDetailOpen(false);
+                deleteTrigger.current = null;
             },
         });
     }
@@ -180,10 +204,26 @@ export default function MembershipPlansIndex() {
             : `${plan.total_classes} class visits`;
     const price = (plan: MembershipPlan) => `USD ${plan.price}`;
 
+    function cancelEditor() {
+        if (mode === 'new') {
+            setDetailOpen(false);
+            setSelectedId(null);
+        }
+
+        setMode('detail');
+        form.clearErrors();
+        clearSubmissionError();
+    }
+
     return (
-        <AdminLayout title="Membership plans">
+        <AdminLayout
+            title="Membership plans"
+            className="membership-plans-console"
+        >
             <Head title="Membership plans" />
-            <SubmissionError message={submissionError} />
+            {!detailOpen && !confirmDelete && (
+                <SubmissionError message={submissionError} />
+            )}
             {flash.status && (
                 <p
                     role="status"
@@ -193,18 +233,14 @@ export default function MembershipPlansIndex() {
                     {flash.status}
                 </p>
             )}
-            <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-end">
-                <div>
-                    <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground">
-                        STUDIOFLOW
-                    </p>
-                    <h1 className="display mt-3 text-4xl font-semibold sm:text-5xl">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="text-2xl font-semibold tracking-tight">
                         Membership plans
                     </h1>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                        Set the price, validity and class allowance for each
-                        plan.
-                    </p>
+                    <span className="border-l border-border pl-3 text-xs text-muted-foreground">
+                        {plans.length} plans
+                    </span>
                 </div>
                 <Button
                     id="create-plan-action"
@@ -215,17 +251,15 @@ export default function MembershipPlansIndex() {
                     <CirclePlus /> Create plan
                 </Button>
             </div>
-            <div className="mt-8 grid items-start gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(360px,1fr)]">
+            <div className="mt-6">
                 <section
                     aria-label="Membership plans"
-                    className="min-w-0 overflow-hidden rounded-lg border border-border bg-white"
+                    className="min-w-0 overflow-hidden border border-border bg-white"
                 >
-                    <div className="flex items-center justify-between gap-3 p-5">
-                        <h2 className="display text-2xl font-semibold">
-                            Your plans
-                        </h2>
+                    <div className="flex min-h-18 items-center justify-between gap-3 border-b border-border p-5">
+                        <h2 className="text-sm font-semibold">Plan catalog</h2>
                         <span className="text-xs text-muted-foreground">
-                            {plans.length} plans
+                            Select a plan
                         </span>
                     </div>
                     {plans.length > 0 ? (
@@ -241,7 +275,7 @@ export default function MembershipPlansIndex() {
                                             <TableHead>Status</TableHead>
                                             <TableHead>
                                                 <span className="sr-only">
-                                                    Action
+                                                    Plan actions
                                                 </span>
                                             </TableHead>
                                         </TableRow>
@@ -256,7 +290,7 @@ export default function MembershipPlansIndex() {
                                                         : ''
                                                 }
                                             >
-                                                <TableCell className="pl-5">
+                                                <TableCell className="pl-5 whitespace-normal">
                                                     <strong className="font-semibold">
                                                         {plan.name}
                                                     </strong>
@@ -283,17 +317,76 @@ export default function MembershipPlansIndex() {
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Button
-                                                        variant="outline"
-                                                        className="h-10"
-                                                        disabled={busy}
-                                                        onClick={() =>
-                                                            selectPlan(plan)
-                                                        }
-                                                        aria-label={`View ${plan.name}`}
+                                                    <div
+                                                        className="flex items-center justify-end gap-2"
+                                                        role="group"
+                                                        aria-label={`Actions for ${plan.name}`}
                                                     >
-                                                        View
-                                                    </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="h-10"
+                                                            disabled={busy}
+                                                            onClick={(event) =>
+                                                                selectPlan(
+                                                                    plan,
+                                                                    event.currentTarget,
+                                                                )
+                                                            }
+                                                            aria-label={`View ${plan.name}`}
+                                                        >
+                                                            View
+                                                        </Button>
+                                                        <Button
+                                                            id={`toggle-plan-${plan.id}`}
+                                                            variant="outline"
+                                                            className="h-9 w-9 px-0 lg:h-10 lg:w-auto lg:px-3"
+                                                            disabled={busy}
+                                                            onClick={() =>
+                                                                toggleStatus(
+                                                                    plan,
+                                                                )
+                                                            }
+                                                            aria-label={`${plan.enabled ? 'Disable' : 'Enable'} ${plan.name}`}
+                                                            title={`${plan.enabled ? 'Disable' : 'Enable'} ${plan.name}`}
+                                                        >
+                                                            <Power />
+                                                            <span className="hidden lg:inline">
+                                                                {plan.enabled
+                                                                    ? 'Disable'
+                                                                    : 'Enable'}
+                                                            </span>
+                                                        </Button>
+                                                        <Button
+                                                            id={`delete-plan-${plan.id}`}
+                                                            variant="outline"
+                                                            className="h-9 w-9 border-destructive/40 px-0 text-destructive lg:h-10 lg:w-auto lg:px-3"
+                                                            disabled={
+                                                                busy ||
+                                                                plan.has_paid_orders
+                                                            }
+                                                            onClick={(
+                                                                event,
+                                                            ) => {
+                                                                deleteTrigger.current =
+                                                                    event.currentTarget;
+                                                                setSelectedId(
+                                                                    plan.id,
+                                                                );
+                                                                deleteForm.clearErrors();
+                                                                clearSubmissionError();
+                                                                setConfirmDelete(
+                                                                    true,
+                                                                );
+                                                            }}
+                                                            aria-label={`Delete ${plan.name}`}
+                                                            title={`Delete ${plan.name}`}
+                                                        >
+                                                            <Trash2 />
+                                                            <span className="hidden lg:inline">
+                                                                Delete
+                                                            </span>
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -327,25 +420,67 @@ export default function MembershipPlansIndex() {
                                             {allowance(plan)} ·{' '}
                                             {plan.valid_days} days
                                         </p>
-                                        <div className="mt-4 flex items-center justify-between gap-3">
+                                        <div className="mt-4">
                                             <strong className="text-sm tabular-nums">
                                                 {price(plan)}
                                             </strong>
+                                        </div>
+                                        <div className="mt-4 grid gap-2">
                                             <Button
                                                 variant="outline"
                                                 className="h-11"
                                                 disabled={busy}
-                                                onClick={() => selectPlan(plan)}
+                                                onClick={(event) =>
+                                                    selectPlan(
+                                                        plan,
+                                                        event.currentTarget,
+                                                    )
+                                                }
                                                 aria-label={`View ${plan.name}`}
                                             >
                                                 View
+                                            </Button>
+                                            <Button
+                                                id={`toggle-plan-mobile-${plan.id}`}
+                                                variant="outline"
+                                                className="h-11"
+                                                disabled={busy}
+                                                onClick={() =>
+                                                    toggleStatus(plan)
+                                                }
+                                                aria-label={`${plan.enabled ? 'Disable' : 'Enable'} ${plan.name}`}
+                                            >
+                                                <Power />
+                                                {plan.enabled
+                                                    ? 'Disable'
+                                                    : 'Enable'}
+                                            </Button>
+                                            <Button
+                                                id={`delete-plan-mobile-${plan.id}`}
+                                                variant="outline"
+                                                className="h-11 border-destructive/40 text-destructive"
+                                                disabled={
+                                                    busy || plan.has_paid_orders
+                                                }
+                                                onClick={(event) => {
+                                                    deleteTrigger.current =
+                                                        event.currentTarget;
+                                                    setSelectedId(plan.id);
+                                                    deleteForm.clearErrors();
+                                                    clearSubmissionError();
+                                                    setConfirmDelete(true);
+                                                }}
+                                                aria-label={`Delete ${plan.name}`}
+                                            >
+                                                <Trash2 /> Delete
                                             </Button>
                                         </div>
                                     </article>
                                 ))}
                             </div>
                             <p className="border-t border-border p-4 text-xs text-muted-foreground">
-                                Disabled plans remain in your catalog.
+                                Disabled plans remain in your catalog. Purchased
+                                plans cannot be deleted.
                             </p>
                         </>
                     ) : (
@@ -368,133 +503,169 @@ export default function MembershipPlansIndex() {
                         </div>
                     )}
                 </section>
-                <section
-                    aria-label="Plan details and form"
-                    className="min-w-0 rounded-lg border border-border bg-white p-5 sm:p-6"
+                <Dialog
+                    open={detailOpen}
+                    onOpenChange={(open) => {
+                        if (!busy) {
+                            setDetailOpen(open);
+
+                            if (!open) {
+                                setMode('detail');
+                                form.clearErrors();
+                                clearSubmissionError();
+                            }
+                        }
+                    }}
                 >
-                    {mode !== 'detail' ? (
-                        <PlanEditor
-                            mode={mode}
-                            form={form}
-                            onSubmit={submit}
-                            onCancel={() => setMode('detail')}
-                        />
-                    ) : selected ? (
-                        <>
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground">
-                                        PLAN DETAILS
-                                    </p>
-                                    <h2 className="display mt-2 text-3xl font-semibold">
-                                        {selected.name}
-                                    </h2>
-                                </div>
-                                <Badge
-                                    variant="secondary"
-                                    className={
-                                        selected.enabled
-                                            ? 'bg-accent text-primary'
-                                            : 'text-muted-foreground'
-                                    }
-                                >
-                                    {selected.enabled ? 'Enabled' : 'Disabled'}
-                                </Badge>
-                            </div>
-                            <div className="mt-6 grid gap-2 border-l-4 border-primary bg-accent p-5">
-                                <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground">
-                                    CLASS ALLOWANCE
-                                </span>
-                                <strong className="display text-3xl font-semibold">
-                                    {allowance(selected)}
-                                </strong>
-                                <span className="text-sm text-muted-foreground">
-                                    {price(selected)} · valid for{' '}
-                                    {selected.valid_days} days
-                                </span>
-                            </div>
-                            <p className="mt-5 text-sm leading-6 text-muted-foreground">
-                                {selected.description}
-                            </p>
-                            <dl className="mt-5 grid grid-cols-2 gap-4 border-y border-border py-5 text-sm">
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        Plan type
-                                    </dt>
-                                    <dd className="mt-2 font-semibold">
-                                        {selected.type === 'monthly'
-                                            ? 'Monthly'
-                                            : 'Class pack'}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-muted-foreground">
-                                        Valid for
-                                    </dt>
-                                    <dd className="mt-2 font-semibold">
-                                        {selected.valid_days} days
-                                    </dd>
-                                </div>
-                            </dl>
-                            <div className="mt-6 flex flex-wrap gap-2">
-                                <Button onClick={editPlan} disabled={busy}>
-                                    <Pencil /> Edit plan
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={toggleStatus}
-                                    disabled={busy}
-                                >
-                                    {statusForm.processing ? (
-                                        <LoaderCircle className="animate-spin" />
-                                    ) : (
-                                        <Power />
-                                    )}
-                                    {statusForm.processing
-                                        ? 'Saving...'
-                                        : selected.enabled
-                                          ? 'Disable plan'
-                                          : 'Enable plan'}
-                                </Button>
-                                <Button
-                                    id="delete-plan-action"
-                                    variant="outline"
-                                    className="border-destructive/40 text-destructive"
-                                    disabled={busy || selected.has_paid_orders}
-                                    onClick={() => {
-                                        deleteForm.clearErrors();
-                                        clearSubmissionError();
-                                        setConfirmDelete(true);
-                                    }}
-                                >
-                                    <Trash2 /> Delete plan
-                                </Button>
-                            </div>
-                            <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                                {selected.has_paid_orders
-                                    ? 'Purchased plans cannot be deleted.'
-                                    : 'Deleted plans are hidden from the default list. There is no restore action.'}
-                            </p>
-                            <p className="mt-6 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">
-                                Disabling prevents new orders. Existing valid
-                                unpaid orders can still complete using their
-                                saved purchase details. Plan changes preserve
-                                purchased benefits and history. These rules take
-                                effect with the purchase flow.
-                            </p>
-                        </>
-                    ) : (
-                        <div className="grid justify-items-center gap-4 py-12 text-center text-sm text-muted-foreground">
-                            <CreditCard size={28} />
-                            <h3 className="font-semibold text-foreground">
-                                Select a plan
-                            </h3>
-                            <p>
-                                View an existing plan or create your first one.
-                            </p>
-                        </div>
-                    )}
-                </section>
+                    <DialogContent
+                        className="membership-plans-console plan-modal max-h-[92dvh] w-[calc(100%-1.5rem)] max-w-[900px] overflow-y-auto p-0 sm:max-h-[90dvh] sm:max-w-[900px] [&_[data-slot=dialog-close]]:top-2 [&_[data-slot=dialog-close]]:right-2 [&_[data-slot=dialog-close]]:size-11"
+                        showCloseButton={!busy}
+                        onCloseAutoFocus={(event) => {
+                            event.preventDefault();
+                            const trigger = detailTrigger.current;
+                            (trigger?.isConnected
+                                ? trigger
+                                : document.getElementById('create-plan-action')
+                            )?.focus();
+                        }}
+                    >
+                        <DialogHeader className="sr-only">
+                            <DialogTitle>
+                                {mode === 'new'
+                                    ? 'Create a plan'
+                                    : mode === 'edit'
+                                      ? `Edit ${selected?.name ?? 'plan'}`
+                                      : (selected?.name ?? 'Plan details')}
+                            </DialogTitle>
+                            <DialogDescription>
+                                {mode === 'detail'
+                                    ? 'Membership plan details.'
+                                    : 'Membership plan information, terms and availability.'}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <section
+                            aria-label={
+                                mode === 'detail'
+                                    ? 'Plan details'
+                                    : 'Plan editor'
+                            }
+                            className="min-w-0"
+                        >
+                            {mode !== 'detail' ? (
+                                <>
+                                    <div className="border-b border-border px-5 py-5 pr-16 sm:px-6 sm:pr-18">
+                                        <h2 className="display text-xl font-semibold">
+                                            {mode === 'new'
+                                                ? 'Create a plan'
+                                                : `Edit ${selected?.name ?? 'plan'}`}
+                                        </h2>
+                                    </div>
+                                    <SubmissionError
+                                        message={submissionError}
+                                    />
+                                    <div className="p-5 sm:p-6">
+                                        <PlanEditor
+                                            mode={mode}
+                                            form={form}
+                                            onSubmit={submit}
+                                            onCancel={cancelEditor}
+                                        />
+                                    </div>
+                                </>
+                            ) : selected ? (
+                                <>
+                                    <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4 pr-16 sm:px-6 sm:pr-18">
+                                        <span className="mr-auto text-sm font-semibold">
+                                            Plan details
+                                        </span>
+                                        <Badge
+                                            variant="secondary"
+                                            className={
+                                                selected.enabled
+                                                    ? 'bg-accent text-primary'
+                                                    : 'text-muted-foreground'
+                                            }
+                                        >
+                                            {selected.enabled
+                                                ? 'Enabled'
+                                                : 'Disabled'}
+                                        </Badge>
+                                        <Button
+                                            id="edit-plan-action"
+                                            variant="outline"
+                                            className="h-11 sm:h-9"
+                                            onClick={editPlan}
+                                            disabled={busy}
+                                        >
+                                            <Pencil /> Edit plan
+                                        </Button>
+                                    </div>
+                                    <div className="px-5 py-6 sm:px-6">
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">
+                                                {selected.type === 'monthly'
+                                                    ? 'Monthly membership'
+                                                    : 'Class pack'}
+                                            </p>
+                                            <h2 className="display mt-2 text-2xl font-semibold sm:text-3xl">
+                                                {selected.name}
+                                            </h2>
+                                        </div>
+                                        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                                            {selected.description}
+                                        </p>
+                                        <dl className="mt-6 grid grid-cols-2 gap-5 border-y border-border py-5 sm:grid-cols-3">
+                                            <div className="col-span-2 sm:col-span-1">
+                                                <dt className="text-xs text-muted-foreground">
+                                                    Price
+                                                </dt>
+                                                <dd className="mt-2 font-mono text-lg font-semibold tabular-nums">
+                                                    {price(selected)}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-xs text-muted-foreground">
+                                                    Class allowance
+                                                </dt>
+                                                <dd className="mt-2 font-semibold">
+                                                    {selected.type === 'monthly'
+                                                        ? 'Unlimited'
+                                                        : `${selected.total_classes} visits`}
+                                                </dd>
+                                            </div>
+                                            <div>
+                                                <dt className="text-xs text-muted-foreground">
+                                                    Validity
+                                                </dt>
+                                                <dd className="mt-2 font-semibold">
+                                                    {selected.valid_days} days
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                        <p className="mt-5 border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
+                                            Disabling prevents new orders.
+                                            Existing valid unpaid orders can
+                                            still complete using their saved
+                                            purchase details. Plan changes
+                                            preserve purchased benefits and
+                                            history. These rules take effect
+                                            with the purchase flow.
+                                        </p>
+                                        {dialogMessage && (
+                                            <p
+                                                role="status"
+                                                className="mt-4 flex items-center gap-2 border-l-2 border-primary bg-accent/50 p-3 text-sm text-primary"
+                                            >
+                                                <Check size={16} />
+                                                {dialogMessage}
+                                            </p>
+                                        )}
+                                    </div>
+                                </>
+                            ) : null}
+                        </section>
+                    </DialogContent>
+                </Dialog>
             </div>
             {selected && (
                 <Dialog
@@ -508,15 +679,15 @@ export default function MembershipPlansIndex() {
                     }}
                 >
                     <DialogContent
+                        className="membership-plans-console"
                         showCloseButton={false}
                         onCloseAutoFocus={(event) => {
                             event.preventDefault();
-                            const focusTarget =
-                                document.querySelector<HTMLButtonElement>(
-                                    '#delete-plan-action:not(:disabled)',
-                                ) ??
-                                document.getElementById('create-plan-action');
-                            focusTarget?.focus();
+                            const trigger = deleteTrigger.current;
+                            (trigger?.isConnected
+                                ? trigger
+                                : document.getElementById('create-plan-action')
+                            )?.focus();
                         }}
                     >
                         <DialogHeader>
@@ -587,14 +758,16 @@ function PlanEditor({
 
     return (
         <>
-            <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground">
-                {mode === 'new' ? 'NEW PLAN' : 'EDIT PLAN'}
-            </p>
-            <h2 className="display mt-2 text-3xl font-semibold">
-                {mode === 'new' ? 'Create a plan' : 'Edit plan'}
-            </h2>
-            <form onSubmit={onSubmit} noValidate className="mt-6 space-y-5">
+            <form
+                onSubmit={onSubmit}
+                noValidate
+                className="plan-form space-y-5"
+                aria-busy={form.processing}
+            >
                 <fieldset disabled={form.processing} className="space-y-5">
+                    <p className="border-b border-border pb-3 text-xs font-semibold">
+                        Plan information
+                    </p>
                     <FormField
                         id="name"
                         label="Plan name"
@@ -633,7 +806,10 @@ function PlanEditor({
                             }
                         />
                     </FormField>
-                    <div className="grid gap-5 sm:grid-cols-2">
+                    <p className="border-b border-border pb-3 text-xs font-semibold">
+                        Terms and availability
+                    </p>
+                    <div className="grid gap-5">
                         <FormField
                             id="price"
                             label="Price (USD)"
@@ -681,7 +857,7 @@ function PlanEditor({
                             </NativeSelect>
                         </FormField>
                     </div>
-                    <div className="grid gap-5 sm:grid-cols-2">
+                    <div className="grid gap-5">
                         <FormField
                             id="valid_days"
                             label="Valid days"
@@ -707,7 +883,7 @@ function PlanEditor({
                             />
                         </FormField>
                         {form.data.type === 'monthly' ? (
-                            <div>
+                            <div className="plan-field">
                                 <Label>Class allowance</Label>
                                 <div className="flex h-9 items-center text-sm font-medium">
                                     Unlimited classes
@@ -811,7 +987,7 @@ function FormField({
     children: ReactNode;
 }) {
     return (
-        <div className="grid gap-2">
+        <div className="plan-field grid gap-2">
             <Label htmlFor={id}>{label}</Label>
             {children}
             {error && (
