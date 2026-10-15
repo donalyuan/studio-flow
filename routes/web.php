@@ -1,10 +1,15 @@
 <?php
 
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\PublicSiteController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', fn () => Inertia::render('Public/Home'))->name('home');
+Route::get('/', [PublicSiteController::class, 'home'])->name('home');
+Route::get('/memberships', [PublicSiteController::class, 'memberships'])->name('memberships.index');
+Route::get('/contact', [PublicSiteController::class, 'contact'])->name('contact.create');
+Route::post('/contact', [PublicSiteController::class, 'storeContact'])
+    ->middleware('throttle:10,1')
+    ->name('contact.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('/settings/profile', [AccountSettingsController::class, 'profile'])->name('settings.profile');

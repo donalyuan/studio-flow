@@ -22,3 +22,13 @@ export interface MembershipPlan {
     enabled: boolean;
     has_paid_orders: boolean;
 }
+
+export interface PublicMembershipPlan {
+    id: number;
+    name: string;
+    description: string;
+    price: string;
+    type: 'monthly' | 'class_pack';
+    valid_days: number;
+    total_classes: number | null;
+}

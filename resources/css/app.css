@@ -221,10 +221,159 @@ textarea:focus-visible {
     padding: 60px;
 }
 .home-content h1 {
-    font-size: clamp(40px, 4vw, 64px);
+    max-width: 11ch;
+    font-size: 58px;
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.05em;
+}
+.eyebrow {
+    color: #365f7d;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+.public-section-inner {
+    width: min(1120px, calc(100% - 80px));
+    margin: 0 auto;
+}
+.home-section {
+    padding: 80px 0;
+    background: #fff;
+}
+.home-section-muted {
+    background: #f5f7fa;
+    border-top: 1px solid #d7dfe6;
+}
+.section-heading {
+    max-width: 560px;
+}
+.section-heading h2 {
+    margin-top: 12px;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+}
+.section-heading p:last-child {
+    margin-top: 16px;
+    color: #63727e;
+    font-size: 15px;
+    line-height: 1.7;
+}
+.section-heading-row {
+    display: flex;
+    max-width: none;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+}
+.home-classes-grid,
+.home-plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 36px;
+}
+.home-plans-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.home-class-card,
+.home-plan-card,
+.public-plan-card {
+    border: 1px solid #d7dfe6;
+    background: #fff;
+}
+.home-class-card {
+    min-height: 184px;
+    padding: 24px;
+}
+.home-class-card h3 {
+    margin-top: 36px;
+    font-size: 20px;
+    font-weight: 600;
+}
+.home-class-card p:last-child {
+    margin-top: 10px;
+    color: #63727e;
+    font-size: 14px;
+    line-height: 1.6;
+}
+.home-plan-card {
+    padding: 24px;
+}
+.home-contact-band {
+    padding: 36px 0;
+    background: #365f7d;
+    color: #fff;
+}
+.home-contact-band .eyebrow {
+    color: #dceaf2;
+}
+.public-page-workspace {
+    width: min(1120px, calc(100% - 80px));
+    margin: 0 auto;
+    padding: 68px 0 88px;
+}
+.public-page-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 28px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #d7dfe6;
+}
+.public-page-heading h1 {
+    max-width: 14ch;
+    margin-top: 14px;
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+}
+.public-page-heading > p {
+    max-width: 300px;
+    color: #63727e;
+    font-size: 14px;
+    line-height: 1.7;
+}
+.public-plans-list {
+    display: grid;
+    gap: 16px;
+    margin-top: 32px;
+}
+.public-plan-card {
+    padding: 28px;
+}
+.public-empty-state {
+    margin-top: 32px;
+    padding: 28px;
+    border-left: 2px solid #365f7d;
+    background: #f5f7fa;
+    color: #63727e;
+    font-size: 14px;
+}
+.contact-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+    gap: 64px;
+    padding-top: 36px;
+}
+.contact-aside {
+    min-width: 0;
+    padding: 24px 0;
+}
+.contact-form-panel {
+    min-width: 0;
+    padding: 28px;
+    border: 1px solid #d7dfe6;
+    background: #fff;
+}
+.contact-form-panel input,
+.contact-form-panel textarea {
+    background: #fff;
 }
 .settings-workspace {
     width: 100%;
@@ -320,6 +469,55 @@ textarea:focus-visible {
     }
     .home-content h1 {
         font-size: 44px;
+    }
+    .public-section-inner,
+    .public-page-workspace {
+        width: calc(100% - 48px);
+    }
+    .home-section {
+        padding: 56px 0;
+    }
+    .section-heading h2 {
+        font-size: 30px;
+    }
+    .section-heading-row {
+        display: block;
+    }
+    .section-heading-row > a {
+        margin-top: 20px;
+    }
+    .home-classes-grid,
+    .home-plans-grid {
+        grid-template-columns: 1fr;
+    }
+    .home-class-card h3 {
+        margin-top: 28px;
+    }
+    .public-page-workspace {
+        padding: 44px 0 60px;
+    }
+    .public-page-heading {
+        display: block;
+    }
+    .public-page-heading h1 {
+        font-size: 34px;
+    }
+    .public-page-heading > p {
+        margin-top: 16px;
+    }
+    .public-plan-card {
+        padding: 22px;
+    }
+    .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding-top: 24px;
+    }
+    .contact-aside {
+        padding: 0;
+    }
+    .contact-form-panel {
+        padding: 22px;
     }
     .settings-workspace {
         padding: 28px 24px 48px;

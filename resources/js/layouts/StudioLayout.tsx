@@ -24,7 +24,12 @@ export default function StudioLayout({
     const { submissionError, clearSubmissionError } = useSubmissionError(
         logout.processing,
     );
-    const labels = ['Home', 'Classes', 'Memberships', 'Contact'];
+    const labels = [
+        { label: 'Home', href: '/' },
+        { label: 'Classes', href: '/#classes' },
+        { label: 'Memberships', href: '/memberships' },
+        { label: 'Contact', href: '/contact' },
+    ];
 
     return (
         <div className="public-shell">
@@ -41,24 +46,15 @@ export default function StudioLayout({
                         aria-label="Main navigation"
                         className="public-nav hidden items-center lg:flex"
                     >
-                        {labels.map((label) =>
-                            label === 'Home' ? (
-                                <Link
-                                    key={label}
-                                    href="/"
-                                    className="text-sm font-medium text-muted-foreground"
-                                >
-                                    {label}
-                                </Link>
-                            ) : (
-                                <span
-                                    key={label}
-                                    className="text-sm font-medium text-muted-foreground"
-                                >
-                                    {label}
-                                </span>
-                            ),
-                        )}
+                        {labels.map(({ label, href }) => (
+                            <Link
+                                key={label}
+                                href={href}
+                                className="text-sm font-medium text-muted-foreground"
+                            >
+                                {label}
+                            </Link>
+                        ))}
                     </nav>
                     <div className="header-actions flex min-w-0 items-center">
                         {auth.user ? (
@@ -137,25 +133,16 @@ export default function StudioLayout({
                         aria-label="Mobile navigation"
                         className="grid gap-4 border-t border-border px-5 py-5 lg:hidden"
                     >
-                        {labels.map((label) =>
-                            label === 'Home' ? (
-                                <Link
-                                    key={label}
-                                    href="/"
-                                    onClick={() => setMenu(false)}
-                                    className="text-sm font-medium text-muted-foreground"
-                                >
-                                    {label}
-                                </Link>
-                            ) : (
-                                <span
-                                    key={label}
-                                    className="text-sm font-medium text-muted-foreground"
-                                >
-                                    {label}
-                                </span>
-                            ),
-                        )}
+                        {labels.map(({ label, href }) => (
+                            <Link
+                                key={label}
+                                href={href}
+                                onClick={() => setMenu(false)}
+                                className="text-sm font-medium text-muted-foreground"
+                            >
+                                {label}
+                            </Link>
+                        ))}
                         {auth.user ? (
                             <>
                                 <span className="truncate text-sm text-muted-foreground">
