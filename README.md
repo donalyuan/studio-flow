@@ -75,6 +75,18 @@ To verify this step, sign in as an administrator, open `Membership plans`, creat
 
 The seeder is idempotent for a catalog containing any record, including soft-deleted records, so rerunning it does not recreate deleted demo plans. Existing local verification rows are data, not application fixtures; do not reset the database with `migrate:fresh` on a shared local volume.
 
+## Step 3.1 Scheduling Administration
+
+Administrators manage course types at `/admin/course-types` and class sessions at `/admin/class-sessions`. Course types contain a name, description, default duration in whole minutes, and availability for new scheduling. Create and edit use dialogs; availability and deletion are row actions. A course type can be deleted only when no class session references it. Disabling a type keeps existing sessions and prevents new scheduling with that type. The server checks these conditions, including direct requests, and serializes course-type mutations and scheduling with transaction row locks.
+
+Class sessions contain a course type, start/end in UTC, capacity, and instructor name. Only future, scheduled sessions can be created or edited. The end must be after the start; capacity and default duration must be positive integers within the database representation range. New sessions receive their scheduled status on the server. Started and ended labels follow time, while cancelled status remains stored. Cross-day sessions show their end date. The selected course's default duration prefills an editable end time. An existing session can retain its disabled course type; a different disabled type cannot be selected.
+
+The approved prototype uses the existing blue/gray administration theme, desktop tables, mobile cards and shadcn/ui dialogs, following the `frontend-design` process. Forms show field and request errors, retain entries on failure, prevent repeated submissions and dismissal while processing, and return focus after closing. Cancelling an edit discards unsaved values. Empty lists include the next relevant action. All scheduling routes require an administrator; member access is forbidden and guests are directed to login.
+
+This step does not provide public class browsing, bookings, session deletion, session cancellation or attendance. Booking-dependent capacity/time/history restrictions will be integrated and verified when the actual booking relationship is introduced; no placeholder booking count is used here. Session cancellation and booking management remain in step 4.4.
+
+To verify, create a course type and a future session, edit both, disable the course type and confirm that a new session cannot use it while its existing session remains readable and editable. Try equal or reversed start/end, past starts, malformed dates, non-integer or zero capacity, and oversized values. Check that rejected requests do not persist changes. A referenced course type must reject deletion, including a direct request; an unused type can be deleted after confirmation. Check an overnight session's end date in both list and details, an empty catalog, failed submissions/retries, keyboard focus, and layouts at 1440px, 768px, 390px and 320px. Repeat direct routes as a member and guest. Use a disposable database for verification; never reset the shared demo volume.
+
 ## Stack
 
 - Laravel 13, PHP 8.4, and Composer.
@@ -91,8 +103,9 @@ does not already exist:
 cp -n .env.example .env
 ```
 
-Set `DB_PASSWORD` and `DB_ROOT_PASSWORD` to your own local values. Set
-`APP_TIMEZONE` to the studio's IANA time zone; `UTC` is only the initial example.
+Set `DB_PASSWORD` and `DB_ROOT_PASSWORD` to your own local values. Keep
+`APP_TIMEZONE=UTC` to match the approved studio scheduling timezone. Dates and
+times in the scheduling interface are entered and displayed in UTC.
 Keep `DB_HOST=db`, `DB_PORT=3306`, and `APP_DEBUG=false`. If port 8080 is occupied,
 change both `APP_PORT` and the port in `APP_URL`.
 
@@ -198,9 +211,9 @@ loaded through Google Fonts, with a system sans-serif fallback.
 
 ## Delivery Boundary
 
-Framework tables, user roles, membership plans with soft deletion, and the order
-data foundation are initialized at this stage. Class, booking, payment-attempt
-and membership-card tables follow their implementation stages. Order creation
+Framework tables, user roles, membership plans with soft deletion, the order
+data foundation, course types, and class sessions are initialized at this stage.
+Booking, payment-attempt and membership-card tables follow their implementation stages. Order creation
 and payment flows are not implemented yet. A new environment has no demo login accounts until an
 administrator is created with `studioflow:create-admin` and a member registers.
 

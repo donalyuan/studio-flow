@@ -1,6 +1,8 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
+    BookOpen,
+    CalendarDays,
     CreditCard,
     LoaderCircle,
     LogOut,
@@ -66,6 +68,32 @@ export default function AdminLayout({
                     <CreditCard /> Membership plans
                 </Link>
             </Button>
+            {[
+                {
+                    label: 'Course types',
+                    href: '/admin/course-types',
+                    icon: BookOpen,
+                },
+                {
+                    label: 'Class sessions',
+                    href: '/admin/class-sessions',
+                    icon: CalendarDays,
+                },
+            ].map(({ label, href, icon: Icon }) => (
+                <Button
+                    asChild
+                    key={href}
+                    variant={title === label ? 'secondary' : 'ghost'}
+                    className="h-11 justify-start text-muted-foreground"
+                >
+                    <Link
+                        href={href}
+                        aria-current={title === label ? 'page' : undefined}
+                    >
+                        <Icon /> {label}
+                    </Link>
+                </Button>
+            ))}
             <Button
                 asChild
                 variant="ghost"
