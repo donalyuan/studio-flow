@@ -125,6 +125,16 @@ the application key in that local file. Generate the key once during initial
 setup; replacing an existing key invalidates encrypted data and sessions.
 The membership plan seeder creates the two approved USD demo plans only when the membership table has no records, including soft-deleted records; it never overwrites edited plans or recreates deleted ones. It does not create login accounts or orders.
 
+After registering an existing member account, create a local demo membership
+card for that account by email. Use `monthly` for a 30-day unlimited card or
+`class_pack` for a 10-class card. The command refuses accounts that already
+have an unexpired card and is available only in local or testing environments:
+
+```bash
+docker compose exec app php artisan studioflow:seed-demo-membership member@example.com monthly
+docker compose exec app php artisan studioflow:seed-demo-membership member@example.com class_pack
+```
+
 After migrations, create a separate administrator through the interactive
 initialization command:
 

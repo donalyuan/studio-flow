@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\Member\CenterController;
 use App\Http\Controllers\PublicSiteController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,6 +11,8 @@ Route::get('/contact', [PublicSiteController::class, 'contact'])->name('contact.
 Route::post('/contact', [PublicSiteController::class, 'storeContact'])
     ->middleware('throttle:10,1')
     ->name('contact.store');
+
+Route::get('/member', CenterController::class)->middleware('auth')->name('member.center');
 
 Route::middleware('auth')->group(function () {
     Route::get('/settings/profile', [AccountSettingsController::class, 'profile'])->name('settings.profile');

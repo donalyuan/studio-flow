@@ -65,6 +65,17 @@ export default function StudioLayout({
                                 >
                                     {auth.user.name}
                                 </span>
+                                {auth.user.role === 'member' && (
+                                    <Button
+                                        asChild
+                                        variant="ghost"
+                                        className="hidden h-11 sm:inline-flex"
+                                    >
+                                        <Link href="/member">
+                                            Member center
+                                        </Link>
+                                    </Button>
+                                )}
                                 <Button
                                     asChild
                                     variant="ghost"
@@ -148,6 +159,15 @@ export default function StudioLayout({
                                 <span className="truncate text-sm text-muted-foreground">
                                     {auth.user.name}
                                 </span>
+                                {auth.user.role === 'member' && (
+                                    <Link
+                                        href="/member"
+                                        className="text-sm font-medium text-primary"
+                                        onClick={() => setMenu(false)}
+                                    >
+                                        Member center
+                                    </Link>
+                                )}
                                 <Link
                                     href="/settings/profile"
                                     className="text-sm font-medium text-primary"

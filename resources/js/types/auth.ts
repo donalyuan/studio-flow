@@ -32,3 +32,12 @@ export interface PublicMembershipPlan {
     valid_days: number;
     total_classes: number | null;
 }
+
+export interface MemberCenterCard {
+    name: string;
+    type: 'monthly' | 'class_pack';
+    startsAt: string;
+    expiresAt: string;
+    totalClasses: number | null;
+    remainingClasses: number | null;
+}
